@@ -11,19 +11,16 @@ export class AppComponent implements OnInit {
   title = 'geoMapTask';
   coordinatesData: Array<Array<number>> = [];
   waypointData: Array<Array<Array<number>>> = []
-
+  distance = 0;
   constructor(private geoJsonService: GeoJsonService) {
   }
 
   // подсчет длины всего пути по методу Евклидово.
-  // выводиятся данные в консоле
   calculationOfTheSettlement() {
     let coordinates = this.coordinatesData;
-    let distance = 0;
     for (let i = 1; i < coordinates.length; i++) {
-      distance += Math.sqrt(((coordinates[i][0] - coordinates[i - 1][0]) ** 2) + ((coordinates[i][1] - coordinates[i - 1][1]) ** 2))
+      this.distance += Math.sqrt(((coordinates[i][0] - coordinates[i - 1][0]) ** 2) + ((coordinates[i][1] - coordinates[i - 1][1]) ** 2))
     }
-    console.log(distance);
   }
 
   ngOnInit() {
@@ -64,5 +61,10 @@ export class AppComponent implements OnInit {
       myPolyline = new ymaps.Polyline(polyLine, {}, {});
       event.target.geoObjects.add(myPolyline);
     }
+    const placeMark = new ymaps.Placemark([59.241384311000076, 69.15289948100012],{
+      hintContent: 'Расстояние',
+      balloonContent: this.distance.toString()
+    })
+    event.target.geoObjects.add(placeMark);
   }
 }
