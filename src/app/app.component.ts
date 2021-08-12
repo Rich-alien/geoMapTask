@@ -10,12 +10,13 @@ import {YaReadyEvent} from 'angular8-yandex-maps';
 export class AppComponent implements OnInit {
   title = 'geoMapTask';
   coordinatesData: Array<Array<number>> = [];
-  waypointData: Array<Array<number>> = []
+  waypointData: Array<Array<Array<number>>> = []
 
   constructor(private geoJsonService: GeoJsonService) {
   }
 
   // подсчет длины всего пути по методу Евклидово.
+  // выводиятся данные в консоле
   calculationOfTheSettlement() {
     let coordinates = this.coordinatesData;
     let distance = 0;
@@ -33,6 +34,7 @@ export class AppComponent implements OnInit {
             for (let coordinate of coordinates) {
               this.coordinatesData.push(coordinate);
             }
+            this.waypointData.push(coordinates);
           }
         }
         this.calculationOfTheSettlement();
@@ -42,59 +44,25 @@ export class AppComponent implements OnInit {
       }
     )
   }
-  getDataWithNormalRange(): void {
-    this.coordinatesData.filter((waypoint: number[]) => {
-      if ((waypoint[0] > 0 && waypoint[0] < 90) && (waypoint[1] > 0 && waypoint[1] < 180)) {
-        this.waypointData.push(waypoint);
-      }
-    })
-  }
-  subarray: any = [];
+  // функция при которой мы можем убрать все линии за терриорией карты, при её использваоние
+  // устраниятся все те что выходят за пределы линий
+  // для её работы нужно будет удалить c строчки 36;
+  // а так же расскоментировать запуск функции на 59 строчке
+  // но по заданию ничего не говорилось про удаление ненужных точек. но функционал есть для этого
+  // getDataWithNormalRange(): void {
+  //   this.coordinatesData.filter((waypoint: number[]) => {
+  //     if ((waypoint[0] > 0 && waypoint[0] < 90) && (waypoint[1] > 0 && waypoint[1] < 180)) {
+  //       this.waypointData.push(waypoint);
+  //     }
+  //   })
+  // }
+  // создание кривых на карте в виде полигонов.
   onMapReady(event: YaReadyEvent<ymaps.Map>): void {
-    const objectManagerOptions: ymaps.IObjectManagerOptions = {
-      clusterize: true,
-      gridSize: 32,
-      clusterDisableClickZoom: true,
-    };
-    this.getDataWithNormalRange();
-    const objectManager = new ymaps.ObjectManager(objectManagerOptions);
-    objectManager.objects.options.set('preset', 'islands#greenDotIcon');
-    objectManager.clusters.options.set('preset', 'islands#greenClusterIcons');
-    event.target.geoObjects.add(objectManager);
-    const SIZE = 200; //размер подмассива
-    const TIME = 5000;
-    let i = 0
-    for (i; i < Math.ceil(this.waypointData.length / SIZE); i++) {
-      this.subarray[i] = (this.waypointData.slice((i * SIZE), (i * SIZE) + SIZE));
+    // this.getDataWithNormalRange();
+    let myPolyline: any;
+    for (let polyLine of this.waypointData) {
+      myPolyline = new ymaps.Polyline(polyLine, {}, {});
+      event.target.geoObjects.add(myPolyline);
     }
-
-    let counter = 1;
-    let stepSubArray = this.subarray[0];
-
-
-    let count = setInterval(() => {
-      counter += 1;
-      for (let waypint of this.subarray[counter]) {
-        stepSubArray.push(waypint);
-      }
-
-      (stepSubArray as Array<Array<number>>).forEach((point, index) => {
-        objectManager.add({
-          type: 'Feature',
-          id: index,
-          geometry: {
-            type: 'Point',
-            coordinates: point,
-          },
-        });
-      });
-      // if (counter > this.subarray.length) {
-      //   clearInterval(count)
-      // }
-      if (counter > 10) {
-        clearInterval(count)
-      }
-    }, TIME);
-
   }
 }
